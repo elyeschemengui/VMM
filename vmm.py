@@ -1,18 +1,19 @@
 import os
 from platform import system as system_name  
-from os import system as system_call  
+from os import system as system_call  #to execute commands
 import logging
 from datetime import date
 import time
 import smtplib  
 import urllib
-import paramiko
+import paramiko #to execute shell commands
 import socket
 
-
+#to test the ping 
 def ping(host): 
     ping_param = "-n 1" if system_name().lower() == "windows" else "-c 1"
     return system_call("ping " + ping_param + " " + host) == 0
+#to check if the host is up or down 
 def is_website_online(url):  
     import ssl
     ssl._create_default_https_context = ssl._create_unverified_context
@@ -23,7 +24,7 @@ def is_website_online(url):
         code = 404
     return code == 200
 
-
+#write logs and file creation if its not existing 
 def write_log(log_msg):
     
     debug = False
@@ -38,9 +39,9 @@ def write_log(log_msg):
         logging.basicConfig(filename=dir_path + '/logs/vmm_log_' + str(today) + '.log', level=logging.DEBUG)
         logging.info(log_msg)
 
-
+# function to send an email to the administrator to notify that a server is down 
 def send_email(to_address, subject, body):
-    fromaddr = 'educloud.monitor@gmail.com'
+    fromaddr = 'the email of the sender'
     toaddrs = to_address
     msg = "\r\n".join([
         "From: %s" % fromaddr,
@@ -50,7 +51,7 @@ def send_email(to_address, subject, body):
         "%s" % body
     ])
     username = fromaddr
-    password = 'educloud2018'
+    password = 'your password here'
     server = smtplib.SMTP('smtp.gmail.com:587')
     server.ehlo()
     server.starttls()
@@ -59,17 +60,20 @@ def send_email(to_address, subject, body):
     server.quit()
 
 def main(vm_name, vm_ip, cmd_command):
-    admin_email = 'elyes.ch0@gmail.com'
+    admin_email = 'the email of the receiver'
     log_time = time.strftime("%Y-%m-%d %H:%M:%S")
     if not is_website_online(vm_ip):
         time.sleep(30)
         if not is_website_online(vm_ip):
             write_log("%s :: Connect to VM name [%s], IP/URL [%s] failed" % (log_time, vm_name, vm_ip))
+            #it will send an email to the administrator to inform him that a server is down
             send_email(admin_email, '[VMM] Educloud : %s down' % vm_name,
                        'Connect to %s failed, will try to reboot VM\r\nTime: %s' % (vm_ip, log_time))           
             #system_call(cmd_command)
             ssh = paramiko.SSHClient()
-            ssh.connect('192.168.153.33', username='root', password='21256193')
+            ssh.connect('192.168.153.33', username='ESXI username', password='esxi username password')
+            #the command to execute .reset ( to restart the virtual machine that its name mail server ) 
+            #other commands than .reset , .on , .off
             ssh_stdin, ssh_stdout, ssh_stderr = ssh.exec_command('vim-cmd vmsvc/power.reset vim-cmd vmsvc/getallvms | grep '+ server_name +' | cut -c1,2')
             time.sleep(180)
             log_time = time.strftime("%Y-%m-%d %H:%M:%S")
